@@ -1,0 +1,280 @@
+# ============================================================
+# NotebookLM Lite - Git Ignore
+# ============================================================
+
+# ------------------------------------------------------------
+# Environment variables / secrets
+# ------------------------------------------------------------
+
+.env
+.env.*
+!.env.example
+
+# API keys / credentials
+*.pem
+*.key
+*.crt
+secrets/
+credentials/
+config/secrets/
+
+
+# ------------------------------------------------------------
+# Python
+# ------------------------------------------------------------
+
+__pycache__/
+*.py[cod]
+*$py.class
+
+*.so
+
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Python virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Coverage
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.tox/
+.nox/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+
+
+# ------------------------------------------------------------
+# FastAPI / application runtime
+# ------------------------------------------------------------
+
+*.log
+logs/
+
+# Local runtime files
+*.pid
+*.pid.lock
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/
+
+
+# ------------------------------------------------------------
+# Uploaded documents
+# IMPORTANT: PDFs uploaded by users should not enter Git
+# ------------------------------------------------------------
+
+uploads/
+
+# Generated / processed documents
+processed/
+storage/
+data/
+
+# Local vector/index/cache files
+.cache/
+cache/
+
+
+# ------------------------------------------------------------
+# PostgreSQL / database
+# ------------------------------------------------------------
+
+# Local database files
+*.db
+*.sqlite
+*.sqlite3
+
+# PostgreSQL dumps
+*.dump
+*.sql.gz
+
+# PostgreSQL local data directories
+postgres-data/
+pgdata/
+
+# Docker volumes if accidentally created inside project
+docker-data/
+volumes/
+
+
+# ------------------------------------------------------------
+# Ollama / local AI model artifacts
+# ------------------------------------------------------------
+
+# Do NOT commit downloaded model files
+models/
+ollama/
+ollama-data/
+
+# Large local AI artifacts
+*.gguf
+*.safetensors
+*.bin
+
+
+# ------------------------------------------------------------
+# Node.js / React / frontend
+# ------------------------------------------------------------
+
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+.pnpm-store/
+
+# Build output
+dist/
+build/
+out/
+.next/
+.nuxt/
+.svelte-kit/
+
+# Vite
+.vite/
+
+# React / CRA
+.eslintcache
+
+# TypeScript
+*.tsbuildinfo
+
+
+# ------------------------------------------------------------
+# Frontend environment files
+# ------------------------------------------------------------
+
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+
+client/.env
+client/.env.*
+!client/.env.example
+
+
+# ------------------------------------------------------------
+# IDEs / editors
+# ------------------------------------------------------------
+
+.vscode/
+.idea/
+*.iml
+
+# VS Code workspace files
+*.code-workspace
+
+# JetBrains
+.idea/
+
+
+# ------------------------------------------------------------
+# Operating system files
+# ------------------------------------------------------------
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Linux
+*~
+
+
+# ------------------------------------------------------------
+# Jupyter / notebooks
+# ------------------------------------------------------------
+
+.ipynb_checkpoints/
+
+
+# ------------------------------------------------------------
+# Testing / temporary output
+# ------------------------------------------------------------
+
+.pytest_cache/
+.coverage
+htmlcov/
+
+test-results/
+playwright-report/
+blob-report/
+
+
+# ------------------------------------------------------------
+# Generated documentation / reports
+# ------------------------------------------------------------
+
+reports/
+evaluation-results/
+*.html.tmp
+
+
+# ------------------------------------------------------------
+# Archives
+# ------------------------------------------------------------
+
+*.zip
+*.tar
+*.tar.gz
+*.7z
+*.rar
+
+
+# ------------------------------------------------------------
+# Local development configuration
+# ------------------------------------------------------------
+
+*.local
+*.local.*
+
+# Keep example configuration
+!.env.example
+!**/.env.example
+
+
+# ------------------------------------------------------------
+# Misc
+# ------------------------------------------------------------
+
+*.bak
+*.swp
+*.swo
+*.orig
