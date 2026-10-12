@@ -8,6 +8,9 @@ class ModelProvider(ABC):
     Common interface that every LLM provider must implement.
     """
 
+    name: str
+    model: str
+
     @abstractmethod
     def generate(
         self,

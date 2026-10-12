@@ -1,20 +1,25 @@
+import argparse
+
 from app.db.database import SessionLocal
 from app.services.hybrid_search import hybrid_search_chunks
 
 
-DOCUMENT_ID = "76fa161f-ddee-4e16-b33f-42f26682f8f4"
-
-QUERY = "What programming languages and technologies does this person know?"
-
-
-def main():
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Inspect hybrid retrieval results.")
+    parser.add_argument("query", help="Question to search for")
+    parser.add_argument("--document-id", help="Restrict retrieval to one uploaded document")
+    parser.add_argument("--document-ids", nargs="+", help="Restrict retrieval to these documents")
+    args = parser.parse_args()
+    if args.document_id and args.document_ids:
+        parser.error("Use --document-id or --document-ids, not both.")
     db = SessionLocal()
 
     try:
         results = hybrid_search_chunks(
             db=db,
-            query=QUERY,
-            document_id=DOCUMENT_ID,
+            query=args.query,
+            document_id=args.document_id,
+            document_ids=args.document_ids,
             limit=5,
             candidate_limit=10,
         )

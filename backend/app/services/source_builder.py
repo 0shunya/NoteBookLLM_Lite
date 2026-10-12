@@ -23,15 +23,22 @@ class Source:
     page_number: int
     text: str
     distance: float | None
+    page_start: int | None = None
+    page_end: int | None = None
+    rrf_score: float | None = None
+    rerank_score: float | None = None
 
     def to_prompt_text(self) -> str:
         """
         Convert the source into the format given to the LLM.
         """
 
+        start = self.page_start or self.page_number
+        end = self.page_end or self.page_number
+        page_label = f"p.{start}" if start == end else f"pp.{start}-{end}"
         return (
             f"[{self.source_id}] "
-            f"{self.filename} — p.{self.page_number}\n"
+            f"{self.filename} — {page_label}\n"
             f"{self.text}"
         )
 
@@ -57,6 +64,10 @@ def build_sources(search_results: list[dict]) -> list[Source]:
                 page_number=result["page_number"],
                 text=result["text"],
                 distance=result.get("distance"),
+                page_start=result.get("page_start", result["page_number"]),
+                page_end=result.get("page_end", result["page_number"]),
+                rrf_score=result.get("rrf_score"),
+                rerank_score=result.get("rerank_score"),
             )
         )
 

@@ -1,8 +1,8 @@
+import argparse
+
 from app.db.database import SessionLocal
 from app.services.keyword_search import search_keyword_chunks
 
-
-DOCUMENT_ID = "76fa161f-ddee-4e16-b33f-42f26682f8f4"
 
 QUERIES = [
     "What programming languages and technologies does this person know?",
@@ -13,11 +13,19 @@ QUERIES = [
 ]
 
 
-def main():
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Inspect PostgreSQL full-text search results.")
+    parser.add_argument("--document-id", help="Restrict retrieval to one uploaded document")
+    parser.add_argument("--document-ids", nargs="+", help="Restrict retrieval to these documents")
+    parser.add_argument("queries", nargs="*", help="Queries (defaults to a small sample set)")
+    args = parser.parse_args()
+    if args.document_id and args.document_ids:
+        parser.error("Use --document-id or --document-ids, not both.")
+    queries = args.queries or QUERIES
     db = SessionLocal()
 
     try:
-        for query in QUERIES:
+        for query in queries:
             print("\n" + "=" * 70)
             print(f"QUERY: {query}")
             print("=" * 70)
@@ -25,7 +33,8 @@ def main():
             results = search_keyword_chunks(
                 db=db,
                 query=query,
-                document_id=DOCUMENT_ID,
+                document_id=args.document_id,
+                document_ids=args.document_ids,
                 limit=5,
             )
 

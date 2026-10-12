@@ -1,18 +1,24 @@
+"""One entry point for all text-generation provider calls."""
+
+import os
+
+from app.config import settings
 from app.services.providers.base import ModelProvider
 from app.services.providers.ollama_provider import OllamaProvider
 from app.services.providers.response import ModelResponse
 
 
 class ModelGateway:
-    """
-    Provider-agnostic entry point for model generation.
-
-    The gateway does not care whether the underlying provider is
-    Ollama, OpenAI, or another future provider.
-    """
-
     def __init__(self, provider: ModelProvider):
         self.provider = provider
+
+    @property
+    def provider_name(self) -> str:
+        return self.provider.name
+
+    @property
+    def model_name(self) -> str:
+        return self.provider.model
 
     def generate(
         self,
@@ -20,10 +26,6 @@ class ModelGateway:
         user_prompt: str,
         temperature: float = 0,
     ) -> ModelResponse:
-        """
-        Generate a model response through the configured provider.
-        """
-
         return self.provider.generate(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
@@ -31,17 +33,34 @@ class ModelGateway:
         )
 
 
-def create_local_gateway(
-    model: str = "gemma2:2b",
+def create_model_gateway(
+    provider_name: str | None = None,
+    model: str | None = None,
 ) -> ModelGateway:
-    """
-    Create a gateway using the local Ollama provider.
-    """
+    selected_provider = (provider_name or settings.model_provider).lower()
+    if selected_provider == "ollama":
+        return ModelGateway(OllamaProvider(model=model or settings.generation_model))
+    if selected_provider == "openai":
+        from app.services.providers.openai_provider import OpenAIProvider
 
-    provider = OllamaProvider(
-        model=model,
-    )
+        return ModelGateway(
+            OpenAIProvider(
+                api_key=os.getenv("OPENAI_API_KEY", ""),
+                model=model or settings.openai_model,
+            )
+        )
+    if selected_provider == "gemini":
+        from app.services.providers.gemini_provider import GeminiProvider
 
-    return ModelGateway(
-        provider=provider,
-    )
+        return ModelGateway(
+            GeminiProvider(
+                api_key=os.getenv("GEMINI_API_KEY", ""),
+                model=model or settings.gemini_model,
+            )
+        )
+    raise ValueError(f"Unsupported model provider: {selected_provider}")
+
+
+def create_local_gateway(model: str | None = None) -> ModelGateway:
+    """Backward-compatible factory pinned to the local Ollama provider."""
+    return create_model_gateway(provider_name="ollama", model=model)

@@ -1,22 +1,29 @@
+import argparse
+
 from app.db.database import SessionLocal
-from app.services.citation_validator import validate_citations
 from app.services.generation_service import generate_answer
 from app.services.source_builder import build_sources
 from app.services.vector_search import search_similar_chunks
 
 
-QUERY = "What programming languages and technologies does this person know?"
-
-
-def main():
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Try grounded generation over stored PDFs.")
+    parser.add_argument("query", help="Question to ask the local model")
+    parser.add_argument("--document-id", help="Restrict retrieval to one uploaded document")
+    parser.add_argument("--document-ids", nargs="+", help="Restrict retrieval to these documents")
+    args = parser.parse_args()
+    if args.document_id and args.document_ids:
+        parser.error("Use --document-id or --document-ids, not both.")
     db = SessionLocal()
 
     try:
         # 1. Retrieve the most relevant document chunks.
         results = search_similar_chunks(
             db=db,
-            query=QUERY,
-            limit=3,
+            query=args.query,
+            document_id=args.document_id,
+            document_ids=args.document_ids,
+            limit=5,
         )
 
         # 2. Convert raw search results into numbered sources:
@@ -24,16 +31,11 @@ def main():
         sources = build_sources(results)
 
         # 3. Generate the answer using ONLY those sources.
-        answer = generate_answer(
-            question=QUERY,
+        generation = generate_answer(
+            question=args.query,
             sources=sources,
         )
-
-        # 4. Validate every citation ID used by the model.
-        validation = validate_citations(
-            answer=answer,
-            sources=sources,
-        )
+        answer = generation["answer"]
 
         print("\n===== ANSWER =====\n")
         print(answer)
@@ -47,9 +49,9 @@ def main():
             )
 
         print("\n===== CITATION VALIDATION =====\n")
-        print(f"Valid: {validation['valid']}")
-        print(f"Cited source IDs: {validation['cited_source_ids']}")
-        print(f"Invalid source IDs: {validation['invalid_source_ids']}")
+        print(f"Valid: {generation['validation']['valid']}")
+        print(f"Cited source IDs: {generation['validation']['cited_source_ids']}")
+        print(f"Invalid source IDs: {generation['validation']['invalid_source_ids']}")
 
     finally:
         db.close()

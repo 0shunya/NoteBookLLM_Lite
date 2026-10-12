@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f6f7f9" />
+    <meta name="description" content="Ask questions across your documents and inspect every cited source." />
+    <title>NotebookLM Lite</title>
+    <link rel="stylesheet" href="/app.css?v=2" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Workspace navigation">
+        <a class="brand" href="/" aria-label="NotebookLM Lite home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M6.5 3.75h7.1l4.9 4.9v11.6H6.5a1.75 1.75 0 0 1-1.75-1.75V5.5A1.75 1.75 0 0 1 6.5 3.75Z" stroke="currentColor" stroke-width="1.6"/><path d="M13.5 4v5h5M8 13h8M8 16.5h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <span class="brand-name">Notebook<span>LM</span> Lite</span>
+        </a>
+
+        <div class="sidebar-heading">
+          <span>YOUR NOTEBOOKS</span>
+          <button id="new-notebook" class="icon-button" type="button" aria-label="Create notebook" title="Create notebook">+</button>
+        </div>
+        <nav id="notebook-list" class="notebook-list" aria-label="Notebooks"></nav>
+
+        <div class="sidebar-bottom">
+          <div class="local-card">
+            <span class="status-dot"></span>
+            <div><strong>Running locally</strong><span id="model-label">Checking models…</span></div>
+          </div>
+          <a class="sidebar-link" href="/docs" target="_blank" rel="noreferrer">
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.4"/><path d="M8.15 7.2a1.95 1.95 0 1 1 3.2 1.5c-.95.8-1.35 1.1-1.35 2.15M10 13.65v.05" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+            API documentation
+            <span class="external-mark">↗</span>
+          </a>
+        </div>
+      </aside>
+
+      <main class="main-panel">
+        <header class="topbar">
+          <div class="breadcrumb"><span>Workspace</span><span class="crumb-sep">/</span><strong id="active-title">Choose a notebook</strong></div>
+          <div class="topbar-actions">
+            <button id="upload-top" class="button button-soft" type="button" disabled>
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 13V4m0 0L6.75 7.25M10 4l3.25 3.25M4.5 12.5v2.75A1.75 1.75 0 0 0 6.25 17h7.5a1.75 1.75 0 0 0 1.75-1.75V12.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Add sources
+            </button>
+            <button id="new-chat" class="button button-primary" type="button" disabled>New conversation</button>
+          </div>
+        </header>
+
+        <section id="welcome" class="welcome-view">
+          <div class="welcome-content">
+            <div class="welcome-icon"><svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M8.2 4.7h9.45l6.15 6.15v14.4a2.2 2.2 0 0 1-2.2 2.2H8.2A2.2 2.2 0 0 1 6 25.25V6.9a2.2 2.2 0 0 1 2.2-2.2Z" stroke="currentColor" stroke-width="1.8"/><path d="M17.5 5v6h6M10.5 16h9M10.5 20.5h7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <p class="eyebrow">YOUR RESEARCH, GROUNDED</p>
+            <h1>A clearer way to<br /><span>work with your sources.</span></h1>
+            <p class="welcome-copy">Create a notebook, choose a PDF, and start a conversation just for that document. Every answer comes with page references you can check.</p>
+            <button id="create-first" class="button button-primary button-large" type="button">Create your first notebook <span aria-hidden="true">→</span></button>
+            <div class="welcome-points"><span><i>01</i> Page-aware sources</span><span><i>02</i> Local models</span><span><i>03</i> Verifiable citations</span></div>
+          </div>
+          <div class="welcome-art" aria-hidden="true">
+            <div class="art-orbit orbit-one"></div><div class="art-orbit orbit-two"></div>
+            <div class="paper-card paper-back"><span class="paper-lines"></span><span class="paper-lines short"></span><span class="paper-highlight"></span><span class="paper-lines"></span></div>
+            <div class="paper-card paper-front"><div class="paper-title"><span class="mini-file">PDF</span><span>research-notes.pdf</span></div><div class="paper-lines"></div><div class="paper-lines"></div><div class="paper-highlight"></div><div class="paper-lines short"></div><div class="paper-lines"></div><div class="citation-pill">[2] page 14</div></div>
+            <div class="answer-card"><div class="answer-spark">✳</div><div><span>GROUNDED ANSWER</span><strong>Every claim has a source.</strong></div><span class="answer-cite">[2]</span></div>
+          </div>
+        </section>
+
+        <section id="workspace" class="workspace-view hidden">
+          <aside class="library-panel" aria-label="Notebook documents">
+            <div class="library-header"><div><p class="eyebrow">NOTEBOOK CONTENTS</p><h2>Documents</h2></div><button id="upload-library" class="round-button" type="button" aria-label="Add document" title="Add document">+</button></div>
+            <div id="upload-drop" class="upload-drop" tabindex="0" role="button" aria-label="Upload PDF documents">
+              <span class="upload-icon"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 13V4m0 0L6.75 7.25M10 4l3.25 3.25M4.5 12.5v2.75A1.75 1.75 0 0 0 6.25 17h7.5a1.75 1.75 0 0 0 1.75-1.75V12.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <strong>Add a document</strong><span>Drop a PDF or browse files</span>
+            </div>
+            <input id="file-input" type="file" accept="application/pdf,.pdf" multiple hidden />
+            <div class="source-count-row"><span id="source-count">0 documents</span><span class="source-type">PDF</span></div>
+            <div id="source-list" class="source-list"></div>
+            <div class="privacy-note"><span class="privacy-lock">⌑</span><span>Your documents stay on this machine and are indexed locally.</span></div>
+          </aside>
+
+          <section class="chat-panel" aria-label="Document conversation">
+            <div class="chat-header"><div class="chat-heading"><p class="eyebrow">ASK THIS DOCUMENT</p><h2 id="chat-title">Choose a document</h2></div><div class="chat-controls"><label class="visually-hidden" for="conversation-history">Chat history</label><select id="conversation-history" aria-label="Chat history" disabled><option value="">Chat history</option></select><button id="conversation-menu" class="icon-button" type="button" aria-label="Start a new conversation" title="Start a new conversation" disabled>＋</button></div></div>
+            <div id="chat-messages" class="chat-messages" aria-live="polite"></div>
+            <div id="chat-empty" class="chat-empty">
+              <div class="empty-mark"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.64 5.64l2.12 2.12m8.48 8.48 2.12 2.12m0-12.72-2.12 2.12m-8.48 8.48-2.12 2.12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.5"/></svg></div>
+              <h3>Start with a question</h3><p id="empty-hint">Choose a document to start a private conversation about it.</p>
+              <div class="suggestion-row"><button class="suggestion" type="button" data-question="What are the main ideas in this document?">Summarize this document <span>↗</span></button><button class="suggestion" type="button" data-question="What details should I pay attention to in this document?">Find important details <span>↗</span></button></div>
+            </div>
+            <form id="message-form" class="composer">
+              <label class="visually-hidden" for="question-input">Ask a question about this document</label>
+              <textarea id="question-input" rows="1" maxlength="8000" placeholder="Ask a question about this document…" disabled></textarea>
+              <div class="composer-footer"><span><span class="composer-lock">⌑</span> Answers are grounded in this document</span><button id="send-button" class="send-button" type="submit" aria-label="Send question" disabled><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 15.5v-11m0 0L5.5 9M10 4.5 14.5 9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+            </form>
+            <p class="chat-disclaimer">AI answers can be inaccurate. Open a citation to verify the original passage.</p>
+          </section>
+        </section>
+
+        <div id="toast" class="toast" role="status" aria-live="polite"></div>
+      </main>
+    </div>
+
+    <dialog id="notebook-dialog" class="dialog-card">
+      <form id="notebook-form" method="dialog">
+        <button class="dialog-close" type="button" aria-label="Close">×</button>
+        <p class="eyebrow">NEW WORKSPACE</p><h2>Create a notebook</h2>
+        <p class="dialog-copy">A place to collect sources and ask questions about one subject.</p>
+        <label for="notebook-title">Notebook name</label>
+        <input id="notebook-title" name="title" maxlength="255" placeholder="e.g. Climate research" required />
+        <div class="dialog-actions"><button id="cancel-notebook" class="button button-quiet" type="button">Cancel</button><button class="button button-primary" type="submit">Create notebook <span aria-hidden="true">→</span></button></div>
+      </form>
+    </dialog>
+
+    <dialog id="citation-dialog" class="dialog-card citation-dialog">
+      <div class="citation-dialog-content">
+        <button id="close-citation" class="dialog-close" type="button" aria-label="Close">×</button>
+        <p class="eyebrow">SOURCE REFERENCE</p>
+        <h2 id="citation-title">Source</h2>
+        <p id="citation-page" class="citation-page"></p>
+        <blockquote id="citation-quote"></blockquote>
+        <a id="citation-open-page" class="button button-soft" href="#">Open page text <span aria-hidden="true">↗</span></a>
+      </div>
+    </dialog>
+
+    <script src="/app.js?v=4" defer></script>
+  </body>
+</html>

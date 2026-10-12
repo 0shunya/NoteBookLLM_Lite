@@ -1,3 +1,5 @@
+import argparse
+
 from app.db.database import SessionLocal
 from app.services.source_builder import (
     build_source_prompt,
@@ -6,17 +8,23 @@ from app.services.source_builder import (
 from app.services.vector_search import search_similar_chunks
 
 
-QUERY = "What programming languages and technologies does this person know?"
-
-
-def main():
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Inspect the passages used as generation sources.")
+    parser.add_argument("query", help="Question to search for")
+    parser.add_argument("--document-id", help="Restrict retrieval to one uploaded document")
+    parser.add_argument("--document-ids", nargs="+", help="Restrict retrieval to these documents")
+    args = parser.parse_args()
+    if args.document_id and args.document_ids:
+        parser.error("Use --document-id or --document-ids, not both.")
     db = SessionLocal()
 
     try:
         # Retrieve the most relevant chunks.
         results = search_similar_chunks(
             db=db,
-            query=QUERY,
+            query=args.query,
+            document_id=args.document_id,
+            document_ids=args.document_ids,
             limit=3,
         )
 

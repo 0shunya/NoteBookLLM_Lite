@@ -23,7 +23,7 @@ def main():
     )
 
     print("\nOpenAI response:")
-    print(answer)
+    print(answer.answer)
 
 
 if __name__ == "__main__":

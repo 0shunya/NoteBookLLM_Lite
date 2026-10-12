@@ -1,6 +1,6 @@
 import re
 
-from sqlalchemy import func, select
+from sqlalchemy import func, literal_column, select
 from sqlalchemy.orm import Session
 
 from app.db.models import Chunk, Document
@@ -123,13 +123,14 @@ def search_keyword_chunks(
     # tolerant than requiring every term to match.
     tsquery_text = " | ".join(terms)
 
+    english_config = literal_column("'english'")
     search_query = func.to_tsquery(
-        "english",
+        english_config,
         tsquery_text,
     )
 
     search_vector = func.to_tsvector(
-        "english",
+        english_config,
         Chunk.text,
     )
 
@@ -147,6 +148,8 @@ def search_keyword_chunks(
             Chunk.id,
             Chunk.document_id,
             Chunk.page_number,
+            Chunk.page_start,
+            Chunk.page_end,
             Chunk.text,
             Document.filename,
             rank.label("rank"),
@@ -195,6 +198,8 @@ def search_keyword_chunks(
             "chunk_id": row.id,
             "document_id": row.document_id,
             "page_number": row.page_number,
+            "page_start": row.page_start,
+            "page_end": row.page_end,
             "filename": row.filename,
             "text": row.text,
             "rank": float(row.rank),

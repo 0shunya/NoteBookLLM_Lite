@@ -1,23 +1,21 @@
+import argparse
+
 from app.db.database import SessionLocal
 from app.services.hybrid_search import hybrid_search_chunks
 
 
-DOCUMENT_IDS = [
-    "385fee53-5bb4-4c3c-9479-4b35f47f5ee4",
-    "af9aeef4-7d77-498e-a734-7ba234f0e713",
-]
-
-
-def main():
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Search several uploaded documents together.")
+    parser.add_argument("query", help="Question to search for")
+    parser.add_argument("document_ids", nargs="+", help="IDs returned by the upload API")
+    args = parser.parse_args()
     db = SessionLocal()
 
     try:
-        question = "What programming languages and technologies does Shlok know?"
-
         results = hybrid_search_chunks(
             db=db,
-            query=question,
-            document_ids=DOCUMENT_IDS,
+            query=args.query,
+            document_ids=args.document_ids,
             limit=5,
             candidate_limit=10,
         )

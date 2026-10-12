@@ -1,141 +1,105 @@
+"""Deterministic citation syntax and source-id validation."""
+
 import re
 
 from app.services.source_builder import Source
 
 
-# Matches citations such as:
-# [1]
-# [2]
-# [15]
 CITATION_PATTERN = re.compile(r"\[(\d+)\]")
+BRACKET_PATTERN = re.compile(r"\[([^\[\]]*)\]")
+REFUSAL_PATTERNS = (
+    "not found in the provided sources",
+    "not found in the sources",
+    "not in the provided sources",
+    "could not find relevant information",
+    "couldn't find relevant information",
+    "do not contain enough information",
+    "does not contain enough information",
+    "not specified in the provided sources",
+    "not stated in the provided sources",
+    "not mentioned in the provided sources",
+    "the provided sources do not specify",
+    "the provided sources do not state",
+    "the provided sources do not mention",
+    "the sources do not specify",
+    "the sources do not state",
+    "the sources do not mention",
+    "cannot be determined from the sources",
+    "can't be determined from the sources",
+    "unable to determine from the sources",
+)
+SENTENCE_ABBREVIATIONS = re.compile(
+    r"\b(?:[ap]\.m\.|e\.g\.|i\.e\.|mr\.|mrs\.|dr\.|vs\.)",
+    flags=re.IGNORECASE,
+)
+PROTECTED_PERIOD = "\uE000"
 
 
 def extract_citation_ids(answer: str) -> list[int]:
-    """
-    Extract all citation IDs from the generated answer.
-
-    Duplicate citations are removed while preserving their original order.
-    """
-
-    citation_ids = []
-
-    for match in CITATION_PATTERN.finditer(answer):
-        citation_id = int(match.group(1))
-
-        if citation_id not in citation_ids:
-            citation_ids.append(citation_id)
-
-    return citation_ids
+    return list(dict.fromkeys(int(match.group(1)) for match in CITATION_PATTERN.finditer(answer)))
 
 
 def split_into_sentences(answer: str) -> list[str]:
-    """
-    Split an answer into sentences while keeping citations attached
-    to the sentence they support.
-
-    Examples:
-
-        Python is a skill. [1]
-        -> "Python is a skill. [1]"
-
-        Python is a skill [1].
-        -> "Python is a skill [1]."
-
-        Python is a skill. [1] React is also known. [2]
-        -> two separate sentences
-    """
-
     normalized = re.sub(r"\s+", " ", answer).strip()
-
     if not normalized:
         return []
+    def protect_embedded_abbreviation(match: re.Match) -> str:
+        abbreviation = match.group(0)
+        following_text = normalized[match.end():]
+        # Keep sentence-final abbreviations as boundaries. Citation markers
+        # may follow the period, so sentence splitting also handles a break
+        # immediately after a marker below.
+        if re.match(r"\s+(?:\[\d+\]\s+)?[A-Z]", following_text):
+            if abbreviation.lower() not in {"mr.", "mrs.", "dr.", "vs."}:
+                return abbreviation
+        return abbreviation.replace(".", PROTECTED_PERIOD)
 
-    # The important part is the negative lookahead:
-    #
-    #     (?!\[\d+\])
-    #
-    # It means:
-    #
-    # "Split after punctuation ONLY when the next thing is NOT
-    # a citation."
-    #
-    # Therefore:
-    #
-    #     "Python is a skill. [1]"
-    #
-    # stays together.
-    sentences = re.split(
-        r"(?<=[.!?])\s+(?!\[\d+\])",
-        normalized,
+    protected = SENTENCE_ABBREVIATIONS.sub(protect_embedded_abbreviation, normalized)
+    parts = re.split(
+        r"(?<=[.!?])\s+(?!\[\d+\])|(?<=\])\s+(?=[A-Z])",
+        protected,
     )
-
-    return [
-        sentence.strip()
-        for sentence in sentences
-        if sentence.strip()
-    ]
+    return [part.strip().replace(PROTECTED_PERIOD, ".") for part in parts if part.strip()]
 
 
 def sentence_has_citation(sentence: str) -> bool:
-    """
-    Return True when the sentence contains at least one citation.
-    """
-
     return CITATION_PATTERN.search(sentence) is not None
 
 
-def validate_citations(
-    answer: str,
-    sources: list[Source],
-) -> dict:
-    """
-    Validate citations used by the generated answer.
-
-    Checks:
-
-    1. Every citation ID refers to a source that was actually
-       provided to the model.
-
-    2. Every sentence contains at least one citation.
-
-    This implements the first version of the
-    "NO SOURCE, NO SENTENCE" rule.
-    """
-
-    # IDs that actually exist in the retrieved sources.
-    valid_source_ids = {
-        source.source_id
-        for source in sources
-    }
-
-    # IDs referenced by the generated answer.
-    cited_source_ids = extract_citation_ids(answer)
-
-    # Citation IDs that do not correspond to retrieved sources.
-    invalid_source_ids = [
-        citation_id
-        for citation_id in cited_source_ids
-        if citation_id not in valid_source_ids
+def _malformed_citations(answer: str) -> list[str]:
+    malformed = [
+        match.group(0)
+        for match in BRACKET_PATTERN.finditer(answer)
+        if not match.group(1).isdigit()
     ]
+    stripped = BRACKET_PATTERN.sub("", answer)
+    if "[" in stripped or "]" in stripped:
+        malformed.append("unmatched bracket")
+    return list(dict.fromkeys(malformed))
 
-    # Split the answer while preserving trailing citations.
-    sentences = split_into_sentences(answer)
 
-    # Find sentences that contain no citation.
+def _is_explicit_refusal(sentence: str) -> bool:
+    lowered = sentence.lower()
+    return any(phrase in lowered for phrase in REFUSAL_PATTERNS)
+
+
+def validate_citations(answer: str, sources: list[Source]) -> dict:
+    valid_source_ids = {source.source_id for source in sources}
+    cited_source_ids = extract_citation_ids(answer)
+    invalid_source_ids = [
+        source_id for source_id in cited_source_ids if source_id not in valid_source_ids
+    ]
     uncited_sentences = [
         sentence
-        for sentence in sentences
-        if not sentence_has_citation(sentence)
+        for sentence in split_into_sentences(answer)
+        if not sentence_has_citation(sentence) and not _is_explicit_refusal(sentence)
     ]
-
-    is_valid = (
-        not invalid_source_ids
-        and not uncited_sentences
-    )
+    malformed_citations = _malformed_citations(answer)
 
     return {
-        "valid": is_valid,
+        "valid": not invalid_source_ids and not uncited_sentences and not malformed_citations,
         "cited_source_ids": cited_source_ids,
         "invalid_source_ids": invalid_source_ids,
         "uncited_sentences": uncited_sentences,
+        "malformed_citations": malformed_citations,
     }

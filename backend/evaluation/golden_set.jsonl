@@ -1,0 +1,40 @@
+{"id":"t01","question":"Which stations are the endpoints of the Blue Line?","answerable":true,"expected_terms":["Alder Park","Harbor Point"],"gold_sources":[{"document_id":"transit","page_number":1}]}
+{"id":"t02","question":"How often does a Blue Line train arrive?","answerable":true,"expected_terms":["12 minutes"],"gold_sources":[{"document_id":"transit","page_number":1}]}
+{"id":"t03","question":"What time is the first weekday Blue Line train?","answerable":true,"expected_terms":["5:30","weekday"],"gold_sources":[{"document_id":"transit","page_number":1}]}
+{"id":"t04","question":"When does the last Blue Line train leave?","answerable":true,"expected_terms":["11:30","p.m."],"gold_sources":[{"document_id":"transit","page_number":2}]}
+{"id":"t05","question":"How much is a regular single ride on Riverbend Transit?","answerable":true,"expected_terms":["2.75"],"gold_sources":[{"document_id":"transit","page_number":2}]}
+{"id":"t06","question":"What student fare reduction is available on the Blue Line?","answerable":true,"expected_terms":["20 percent","student ID"],"gold_sources":[{"document_id":"transit","page_number":2}]}
+{"id":"l01","question":"What are the Cedar Learning Library's weekday opening hours?","answerable":true,"expected_terms":["8:00 a.m.","8:00 p.m."],"gold_sources":[{"document_id":"learning","page_number":1}]}
+{"id":"l02","question":"For how many days can I borrow a library book?","answerable":true,"expected_terms":["21 days"],"gold_sources":[{"document_id":"learning","page_number":1}]}
+{"id":"l03","question":"How many renewals can a borrower make for a book?","answerable":true,"expected_terms":["once"],"gold_sources":[{"document_id":"learning","page_number":1}]}
+{"id":"l04","question":"When is drop-in tutoring offered?","answerable":true,"expected_terms":["Tuesdays","Thursdays","3:00 p.m.","5:00 p.m."],"gold_sources":[{"document_id":"learning","page_number":2}]}
+{"id":"l05","question":"How long can a student reserve the 3D printer per maker lab session?","answerable":true,"expected_terms":["90 minutes"],"gold_sources":[{"document_id":"learning","page_number":2}]}
+{"id":"l06","question":"What is the charge for an overdue library book?","answerable":true,"expected_terms":["0.10","per day"],"gold_sources":[{"document_id":"learning","page_number":2}]}
+{"id":"s01","question":"Where should people meet after evacuating the Beacon building?","answerable":true,"expected_terms":["East Assembly Garden"],"gold_sources":[{"document_id":"safety","page_number":1}]}
+{"id":"s02","question":"What number should I call for a building emergency at Beacon?","answerable":true,"expected_terms":["555-0182"],"gold_sources":[{"document_id":"safety","page_number":1}]}
+{"id":"s03","question":"How often are Beacon's fire extinguishers inspected?","answerable":true,"expected_terms":["monthly","each month"],"gold_sources":[{"document_id":"safety","page_number":1}]}
+{"id":"s04","question":"How do I sign up for Beacon closure texts?","answerable":true,"expected_terms":["BEACON ALERT","22662"],"gold_sources":[{"document_id":"safety","page_number":2}]}
+{"id":"s05","question":"Which floors have first aid kits?","answerable":true,"expected_terms":["floor 2","floor 5"],"gold_sources":[{"document_id":"safety","page_number":2}]}
+{"id":"s06","question":"What should I do when an elevator is out of service?","answerable":true,"expected_terms":["stairs"],"gold_sources":[{"document_id":"safety","page_number":2}]}
+{"id":"c01","question":"How early should patients arrive for a Willow Clinic appointment?","answerable":true,"expected_terms":["15 minutes"],"gold_sources":[{"document_id":"clinic","page_number":1}]}
+{"id":"c02","question":"How far ahead should I cancel a clinic appointment?","answerable":true,"expected_terms":["24 hours"],"gold_sources":[{"document_id":"clinic","page_number":1}]}
+{"id":"c03","question":"What is the Willow Clinic phone number?","answerable":true,"expected_terms":["555-0193"],"gold_sources":[{"document_id":"clinic","page_number":1}]}
+{"id":"c04","question":"When is the Willow Clinic pharmacy open?","answerable":true,"expected_terms":["Monday through Friday","9:00 a.m.","6:00 p.m."],"gold_sources":[{"document_id":"clinic","page_number":2}]}
+{"id":"c05","question":"Which entrance has step-free wheelchair access at Willow Clinic?","answerable":true,"expected_terms":["north doors"],"gold_sources":[{"document_id":"clinic","page_number":2}]}
+{"id":"c06","question":"Who should I call with questions about an appointment?","answerable":true,"expected_terms":["555-0193"],"gold_sources":[{"document_id":"clinic","page_number":2}]}
+{"id":"h01","question":"What date is monthly rent due at Alder?","answerable":true,"expected_terms":["5th"],"gold_sources":[{"document_id":"housing","page_number":1}]}
+{"id":"h02","question":"Which website or portal do residents use to pay rent?","answerable":true,"expected_terms":["Alder Resident portal"],"gold_sources":[{"document_id":"housing","page_number":1}]}
+{"id":"h03","question":"What hours are quiet hours in the Alder buildings?","answerable":true,"expected_terms":["10:00 p.m.","7:00 a.m."],"gold_sources":[{"document_id":"housing","page_number":1}]}
+{"id":"h04","question":"Who do I contact about an urgent water leak?","answerable":true,"expected_terms":["555-0137"],"gold_sources":[{"document_id":"housing","page_number":2}]}
+{"id":"h05","question":"How quickly are normal maintenance requests addressed?","answerable":true,"expected_terms":["48 hours"],"gold_sources":[{"document_id":"housing","page_number":2}]}
+{"id":"h06","question":"Where is visitor parking and what is its time limit?","answerable":true,"expected_terms":["Zone B","four hours"],"gold_sources":[{"document_id":"housing","page_number":2}]}
+{"id":"u01","question":"What is the Wi-Fi password on the Blue Line?","answerable":false,"expected_terms":[],"gold_sources":[]}
+{"id":"u02","question":"How many books may a Cedar library member borrow at once?","answerable":false,"expected_terms":[],"gold_sources":[]}
+{"id":"u03","question":"How many people can gather in the Beacon building?","answerable":false,"expected_terms":[],"gold_sources":[]}
+{"id":"u04","question":"What steps should staff follow to clean a chemical spill at Beacon?","answerable":false,"expected_terms":[],"gold_sources":[]}
+{"id":"u05","question":"Which vaccines are required before visiting Willow Clinic?","answerable":false,"expected_terms":[],"gold_sources":[]}
+{"id":"u06","question":"What does a standard appointment at Willow Clinic cost?","answerable":false,"expected_terms":[],"gold_sources":[]}
+{"id":"u07","question":"What late payment penalty does Alder charge for rent?","answerable":false,"expected_terms":[],"gold_sources":[]}
+{"id":"u08","question":"How much is the Alder pet deposit?","answerable":false,"expected_terms":[],"gold_sources":[]}
+{"id":"u09","question":"Is parking available to Cedar Learning Library visitors?","answerable":false,"expected_terms":[],"gold_sources":[]}
+{"id":"u10","question":"What is the earliest available appointment at Willow Clinic?","answerable":false,"expected_terms":[],"gold_sources":[]}
