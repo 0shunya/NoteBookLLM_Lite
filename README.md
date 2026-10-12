@@ -2,6 +2,10 @@
 
 NotebookLM Lite is a local-first document question-answering app. Add PDFs to a notebook, open a PDF for its own conversation history, and inspect the document and page behind each cited answer.
 
+## Cloud edition
+
+The `cloud/` directory contains the Convex, Better Auth, Cloudflare R2, and Gemini migration. The root app remains the local version. The cloud edition uses separate cloud data and does not copy the local PostgreSQL database or PDFs automatically. See [cloud/README.md](cloud/README.md) for local cloud setup and deployment steps.
+
 ## Problem
 
 General chat models can answer confidently without showing where a claim came from. NotebookLM Lite retrieves passages from the user's documents, limits generation to those passages, checks citation markers, and keeps a trace of every embedding and generation call.

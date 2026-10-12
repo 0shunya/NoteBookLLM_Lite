@@ -182,6 +182,12 @@ client/.env
 client/.env.*
 !client/.env.example
 
+# Cloud migration's local encryption key files and Convex configuration
+cloud/.env.local
+cloud/.convex/
+cloud/.gemini-key-encryption-private.pem
+cloud/.gemini-key-encryption-public.txt
+
 
 # ------------------------------------------------------------
 # IDEs / editors
