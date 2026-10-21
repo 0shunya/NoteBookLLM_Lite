@@ -341,7 +341,7 @@ function Workspace() {
 
       <main className="main-panel">
         <header className="topbar">
-          <div className="breadcrumb"><span>Workspace</span><span className="crumb-sep">/</span><strong>{activeDocument?.filename ?? activeNotebook?.title ?? "Choose a notebook"}</strong></div>
+          <div className="breadcrumb"><span>Workspace</span><span className="crumb-sep">/</span><strong title={activeDocument?.filename ?? activeNotebook?.title ?? "Choose a notebook"}>{activeDocument?.filename ?? activeNotebook?.title ?? "Choose a notebook"}</strong></div>
           <div className="topbar-actions">
             <button className="button button-soft" disabled={!activeNotebook} onClick={() => fileInput.current?.click()}>↑ <span>Add sources</span></button>
             <button className="button button-primary" disabled={!activeDocument || activeDocument.status !== "ready"} onClick={startConversation}>New conversation</button>
@@ -359,7 +359,7 @@ function Workspace() {
               <div className="source-count-row"><span>{documents?.length ?? 0} {documents?.length === 1 ? "document" : "documents"}</span><span className="source-type">PDF</span></div>
               <div className="source-list">
                 {documents?.map((document) => <div key={document._id} className={`source-card ${activeDocument?._id === document._id ? "source-selected" : ""}`}>
-                  <button className="source-main" onClick={() => { setActiveDocumentId(document._id); setConversationId(null); }}><span className="pdf-badge">PDF</span><span className="source-info"><strong className="truncate">{document.filename}</strong><small>{document.pageCount ? `${document.pageCount} pages · ` : ""}{document.status === "ready" ? "ready" : document.status}</small></span></button>
+                  <button className="source-main" onClick={() => { setActiveDocumentId(document._id); setConversationId(null); }}><span className="pdf-badge">PDF</span><span className="source-info"><strong className="truncate" title={document.filename}>{document.filename}</strong><small>{document.pageCount ? `${document.pageCount} pages · ` : ""}{document.status === "ready" ? "ready" : document.status}</small></span></button>
                   <button className="delete-button" title="Delete PDF" aria-label={`Delete ${document.filename}`} onClick={() => { setDeleteDocumentError(""); setDocumentToDelete({ id: document._id, filename: document.filename }); }}>×</button>
                   {document.status === "failed" && <p className="source-error">{document.ingestionError || "Indexing failed."}</p>}
                 </div>)}
@@ -370,7 +370,7 @@ function Workspace() {
 
             <section className="chat-panel">
               <div className="chat-header">
-                <div className="chat-heading"><p className="eyebrow">ASK THIS DOCUMENT</p><h2>{activeDocument?.filename ?? "Choose a document"}</h2></div>
+                <div className="chat-heading"><p className="eyebrow">ASK THIS DOCUMENT</p><h2 title={activeDocument?.filename ?? "Choose a document"}>{activeDocument?.filename ?? "Choose a document"}</h2></div>
                 <div className="chat-controls">
                   <label className="visually-hidden" htmlFor="conversation-history">Chat history</label>
                   <select id="conversation-history" value={conversationId ?? ""} disabled={!history.length} onChange={(event) => setConversationId(event.target.value as Id<"conversations">)}>

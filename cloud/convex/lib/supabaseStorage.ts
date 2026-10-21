@@ -1,3 +1,5 @@
+import { ConvexError } from "convex/values";
+
 const STORAGE_BUCKET = process.env.SUPABASE_STORAGE_BUCKET || "documents";
 
 function storageConfig() {
@@ -18,13 +20,25 @@ async function storageRequest(path: string, init: RequestInit = {}): Promise<Res
   const headers = new Headers(init.headers);
   headers.set("apikey", apiKey);
   if (legacyServiceRole) headers.set("authorization", `Bearer ${apiKey}`);
-  const response = await fetch(`${baseUrl}/storage/v1${path}`, {
-    ...init,
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${baseUrl}/storage/v1${path}`, {
+      ...init,
+      headers,
+    });
+  } catch {
+    throw new ConvexError(
+      "Could not connect to Supabase Storage. Check that SUPABASE_URL points to your active Supabase project.",
+    );
+  }
   if (!response.ok) {
-    const detail = await response.text().catch(() => "");
-    throw new Error(`Supabase Storage request failed (${response.status})${detail ? `: ${detail.slice(0, 240)}` : "."}`);
+    if (response.status === 401 || response.status === 403) {
+      throw new ConvexError("Supabase rejected the storage credentials. Check SUPABASE_SECRET_KEY in the production Convex environment.");
+    }
+    if (response.status === 404) {
+      throw new ConvexError("The Supabase Storage bucket was not found. Check SUPABASE_STORAGE_BUCKET in the production Convex environment.");
+    }
+    throw new ConvexError(`Supabase Storage could not prepare the upload (HTTP ${response.status}). Try again, then check the Supabase project if it continues.`);
   }
   return response;
 }

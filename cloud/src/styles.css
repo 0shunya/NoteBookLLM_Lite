@@ -58,3 +58,20 @@
 .button-google { position: relative; background: #fff; border-color: #dce4de; color: #293a31; }
 .button-google:hover { background: #f8faf8; }
 .google-g { position: absolute; left: 14px; font-family: Arial, sans-serif; font-size: 17px; font-weight: 700; background: conic-gradient(from -45deg, #4285f4 0 25%, #34a853 25% 50%, #fbbc05 50% 75%, #ea4335 75%); color: transparent; background-clip: text; }
+
+/* Keep long document names and upload errors inside the document card. */
+.source-list,
+.source-card,
+.source-main,
+.source-info { min-width: 0; max-width: 100%; }
+.source-card { width: 100%; }
+.source-main { flex: 1 1 0; }
+.source-info strong { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.source-error {
+  flex: 0 0 100%;
+  width: auto;
+  min-width: 0;
+  max-width: 100%;
+  margin: 0 0 2px;
+  overflow-wrap: anywhere;
+}
