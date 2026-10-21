@@ -98,6 +98,14 @@ function BrandMark() {
   return <div className="brand"><span className="brand-mark">▤</span><span className="brand-name">Notebook<span>LLM</span> Lite</span></div>;
 }
 
+function friendlyUploadError(error: unknown): string {
+  const message = error instanceof Error ? error.message : "The PDF could not be uploaded.";
+  if (/storage:createUploadUrl|Could not connect to Supabase Storage/i.test(message)) {
+    return "Could not reach Supabase Storage. Check that the Supabase project is active and that its Project URL matches SUPABASE_URL in Convex production. Resume the project if it is paused.";
+  }
+  return message;
+}
+
 function LoadingScreen() {
   return <main className="loading-screen"><BrandMark /><p>Connecting your workspace…</p></main>;
 }
@@ -259,13 +267,14 @@ function Workspace() {
         track("pdf_uploaded", { file_size_bytes: file.size });
         setNotice(`${file.name} is being indexed.`);
       } catch (error) {
+        const message = friendlyUploadError(error);
         if (uploadedDocumentId) {
           await failUpload({
             documentId: uploadedDocumentId,
-            message: error instanceof Error ? error.message : "Upload failed.",
+            message,
           });
         }
-        setNotice(error instanceof Error ? error.message : "The PDF could not be uploaded.");
+        setNotice(message);
       }
     }
     setUploading(false);
@@ -307,11 +316,13 @@ function Workspace() {
     setDeletingDocument(true);
     setDeleteDocumentError("");
     try {
-      await removeDocument({ documentId: documentToDelete.id });
+      const result = await removeDocument({ documentId: documentToDelete.id });
       setActiveDocumentId(null);
       setConversationId(null);
       setDocumentToDelete(null);
-      setNotice("The PDF and its conversation history were deleted.");
+      setNotice(result.storageCleanupPending
+        ? "The PDF and its conversation history were removed. Supabase storage cleanup will retry when the project is reachable."
+        : "The PDF and its conversation history were deleted.");
     } catch (error) {
       setDeleteDocumentError(error instanceof Error ? error.message : "The PDF could not be deleted.");
     } finally {
