@@ -1,14 +1,22 @@
 "use node";
 
-import { GetObjectCommand } from "@aws-sdk/client-s3";
 import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
+// pdfjs-dist does not ship a declaration for the worker entry, but it exports
+// WorkerMessageHandler at runtime. Importing it statically lets Convex bundle it.
+// @ts-expect-error pdfjs-dist omits types for this worker entry point.
+import * as pdfjsWorker from "pdfjs-dist/legacy/build/pdf.worker.mjs";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { internalAction } from "./_generated/server";
 import { splitPageIntoChunks } from "./lib/chunker";
 import { embedTexts } from "./lib/gemini";
 import { decryptGeminiKey } from "./geminiKeyActions";
-import { r2Bucket, r2Client } from "./lib/r2";
+import { downloadSupabaseObject } from "./lib/supabaseStorage";
+
+// PDF.js disables real Web Workers in Node.js. Its fake-worker path first checks
+// this global before dynamically importing the worker relative to the bundled
+// module, which Convex cannot resolve at runtime.
+(globalThis as typeof globalThis & { pdfjsWorker?: typeof pdfjsWorker }).pdfjsWorker = pdfjsWorker;
 
 export const indexDocument = internalAction({
   args: { documentId: v.id("documents") },
@@ -21,11 +29,7 @@ export const indexDocument = internalAction({
       const encryptedKey = await ctx.runQuery(internal.settings.readGeminiKey, { ownerId: document.ownerId });
       if (!encryptedKey) throw new Error("Add your Gemini API key in Settings before indexing PDFs.");
       const apiKey = decryptGeminiKey(encryptedKey);
-      const stored = await r2Client().send(
-        new GetObjectCommand({ Bucket: r2Bucket(), Key: document.storageKey }),
-      );
-      if (!stored.Body) throw new Error("The uploaded PDF could not be read from cloud storage.");
-      const bytes = new Uint8Array(await stored.Body.transformToByteArray());
+      const bytes = await downloadSupabaseObject(document.storageKey);
       if (bytes.byteLength !== document.sizeBytes || Buffer.from(bytes.subarray(0, 5)).toString("ascii") !== "%PDF-") {
         throw new Error("The uploaded file is not a valid PDF.");
       }

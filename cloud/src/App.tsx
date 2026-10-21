@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import {
   Authenticated,
   AuthLoading,
@@ -25,6 +25,22 @@ function AuthScreen() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+
+  async function signInWithGoogle() {
+    setBusy(true);
+    setError("");
+    try {
+      const result = await authClient.signIn.social({
+        provider: "google",
+        callbackURL: window.location.origin,
+      });
+      if (result.error) setError(result.error.message || "Could not sign in with Google.");
+    } catch {
+      setError("Google sign-in could not start. Check that the Google OAuth credentials are set in Convex.");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -57,11 +73,16 @@ function AuthScreen() {
           {mode === "signup" && <label>Your name<input name="name" autoComplete="name" required maxLength={80} /></label>}
           <label>Email<input name="email" type="email" autoComplete="email" required /></label>
           <label>Password<input name="password" type="password" autoComplete={mode === "signin" ? "current-password" : "new-password"} minLength={8} required /></label>
-          {error && <p className="form-error" role="alert">{error}</p>}
           <button className="button button-primary button-full" disabled={busy}>
             {busy ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
           </button>
         </form>
+        {error && <p className="form-error auth-error" role="alert">{error}</p>}
+        <div className="auth-divider"><span>or continue with</span></div>
+        <button className="button button-google button-full" type="button" onClick={() => void signInWithGoogle()} disabled={busy}>
+          <span className="google-g" aria-hidden="true">G</span>
+          {busy ? "Please wait…" : "Continue with Google"}
+        </button>
         <p className="auth-switch">
           {mode === "signin" ? "New here?" : "Already have an account?"}{" "}
           <button className="text-button" type="button" onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setError(""); }}>
@@ -74,7 +95,7 @@ function AuthScreen() {
 }
 
 function BrandMark() {
-  return <div className="brand"><span className="brand-mark">▤</span><span className="brand-name">Notebook<span>LM</span> Lite</span></div>;
+  return <div className="brand"><span className="brand-mark">▤</span><span className="brand-name">Notebook<span>LLM</span> Lite</span></div>;
 }
 
 function LoadingScreen() {
@@ -94,6 +115,13 @@ function Workspace() {
   const [activeDocumentId, setActiveDocumentId] = useState<Id<"documents"> | null>(null);
   const [conversationId, setConversationId] = useState<Id<"conversations"> | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [createNotebookOpen, setCreateNotebookOpen] = useState(false);
+  const [notebookName, setNotebookName] = useState("");
+  const [creatingNotebook, setCreatingNotebook] = useState(false);
+  const [createNotebookError, setCreateNotebookError] = useState("");
+  const [documentToDelete, setDocumentToDelete] = useState<{ id: Id<"documents">; filename: string } | null>(null);
+  const [deletingDocument, setDeletingDocument] = useState(false);
+  const [deleteDocumentError, setDeleteDocumentError] = useState("");
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
@@ -148,14 +176,46 @@ function Workspace() {
     messagesEnd.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [conversationData?.messages]);
 
-  async function addNotebook() {
-    const title = window.prompt("Name your notebook");
-    if (!title?.trim()) return;
-    const id = await createNotebook({ title });
-    setActiveNotebookId(id);
-    setActiveDocumentId(null);
-    setConversationId(null);
-    track("notebook_created");
+  useEffect(() => {
+    if (!createNotebookOpen && !documentToDelete) return;
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key !== "Escape" || creatingNotebook || deletingDocument) return;
+      setCreateNotebookOpen(false);
+      setDocumentToDelete(null);
+      setCreateNotebookError("");
+      setDeleteDocumentError("");
+    }
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [createNotebookOpen, documentToDelete, creatingNotebook, deletingDocument]);
+
+  function openCreateNotebook() {
+    setNotebookName("");
+    setCreateNotebookError("");
+    setCreateNotebookOpen(true);
+  }
+
+  async function submitCreateNotebook(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const title = notebookName.trim();
+    if (!title) {
+      setCreateNotebookError("Enter a name for this notebook.");
+      return;
+    }
+    setCreatingNotebook(true);
+    setCreateNotebookError("");
+    try {
+      const id = await createNotebook({ title });
+      setActiveNotebookId(id);
+      setActiveDocumentId(null);
+      setConversationId(null);
+      setCreateNotebookOpen(false);
+      track("notebook_created");
+    } catch (error) {
+      setCreateNotebookError(error instanceof Error ? error.message : "The notebook could not be created.");
+    } finally {
+      setCreatingNotebook(false);
+    }
   }
 
   async function uploadFiles(files: FileList | null) {
@@ -242,15 +302,20 @@ function Workspace() {
     }
   }
 
-  async function deleteDocument(documentId: Id<"documents">) {
-    if (!window.confirm("Delete this PDF and its conversations? This cannot be undone.")) return;
+  async function confirmDeleteDocument() {
+    if (!documentToDelete || deletingDocument) return;
+    setDeletingDocument(true);
+    setDeleteDocumentError("");
     try {
-      await removeDocument({ documentId });
+      await removeDocument({ documentId: documentToDelete.id });
       setActiveDocumentId(null);
       setConversationId(null);
+      setDocumentToDelete(null);
       setNotice("The PDF and its conversation history were deleted.");
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "The PDF could not be deleted.");
+      setDeleteDocumentError(error instanceof Error ? error.message : "The PDF could not be deleted.");
+    } finally {
+      setDeletingDocument(false);
     }
   }
 
@@ -260,7 +325,7 @@ function Workspace() {
     <div className="app-shell">
       <aside className="sidebar">
         <BrandMark />
-        <div className="sidebar-heading"><span>YOUR NOTEBOOKS</span><button className="icon-button" onClick={addNotebook} title="Create notebook">+</button></div>
+        <div className="sidebar-heading"><span>YOUR NOTEBOOKS</span><button className="icon-button" onClick={openCreateNotebook} title="Create notebook">+</button></div>
         <nav className="notebook-list" aria-label="Notebooks">
           {notebooks?.map((notebook) => <button key={notebook._id} className={`notebook-item ${activeNotebook?._id === notebook._id ? "selected" : ""}`} onClick={() => { setActiveNotebookId(notebook._id); setActiveDocumentId(null); setConversationId(null); }}><span className="small-file">▤</span><span className="truncate">{notebook.title}</span></button>)}
         </nav>
@@ -284,7 +349,7 @@ function Workspace() {
         </header>
 
         {!activeNotebook ? (
-          <section className="welcome-view"><div className="welcome-content"><p className="eyebrow">YOUR RESEARCH, GROUNDED</p><h1>A clearer way to<br /><span>work with your sources.</span></h1><p className="welcome-copy">Create a notebook, add a PDF, and start a conversation just for that document. Answers include page references you can check.</p><button className="button button-primary button-large" onClick={addNotebook}>Create your first notebook <span>→</span></button></div><div className="welcome-art"><div className="paper-card"><b>research-notes.pdf</b><hr />Every claim has a source.</div></div></section>
+          <section className="welcome-view"><div className="welcome-content"><p className="eyebrow">YOUR RESEARCH, GROUNDED</p><h1>A clearer way to<br /><span>work with your sources.</span></h1><p className="welcome-copy">Create a notebook, add a PDF, and start a conversation just for that document. Answers include page references you can check.</p><button className="button button-primary button-large" onClick={openCreateNotebook}>Create your first notebook <span>→</span></button></div><div className="welcome-art"><div className="paper-card"><b>research-notes.pdf</b><hr />Every claim has a source.</div></div></section>
         ) : (
           <section className="workspace-view">
             <aside className="library-panel">
@@ -295,7 +360,7 @@ function Workspace() {
               <div className="source-list">
                 {documents?.map((document) => <div key={document._id} className={`source-card ${activeDocument?._id === document._id ? "source-selected" : ""}`}>
                   <button className="source-main" onClick={() => { setActiveDocumentId(document._id); setConversationId(null); }}><span className="pdf-badge">PDF</span><span className="source-info"><strong className="truncate">{document.filename}</strong><small>{document.pageCount ? `${document.pageCount} pages · ` : ""}{document.status === "ready" ? "ready" : document.status}</small></span></button>
-                  <button className="delete-button" title="Delete PDF" aria-label={`Delete ${document.filename}`} onClick={() => void deleteDocument(document._id)}>×</button>
+                  <button className="delete-button" title="Delete PDF" aria-label={`Delete ${document.filename}`} onClick={() => { setDeleteDocumentError(""); setDocumentToDelete({ id: document._id, filename: document.filename }); }}>×</button>
                   {document.status === "failed" && <p className="source-error">{document.ingestionError || "Indexing failed."}</p>}
                 </div>)}
               </div>
@@ -326,7 +391,20 @@ function Workspace() {
                 <div ref={messagesEnd} />
               </div>
               <form className="composer" onSubmit={(event) => void submitQuestion(event)}>
-                <textarea value={message} onChange={(event) => setMessage(event.target.value)} placeholder={activeDocument ? "Ask a question about this document…" : "Choose a document first…"} disabled={!conversationId || sending} maxLength={5000} rows={2} />
+                <textarea
+                  value={message}
+                  onChange={(event) => setMessage(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
+                      event.preventDefault();
+                      event.currentTarget.form?.requestSubmit();
+                    }
+                  }}
+                  placeholder={activeDocument ? "Ask a question about this document…" : "Choose a document first…"}
+                  disabled={!conversationId || sending}
+                  maxLength={5000}
+                  rows={2}
+                />
                 <div className="composer-footer"><span>Answers are grounded in this document</span><button className="send-button" disabled={!conversationId || !message.trim() || sending} aria-label="Send question">↑</button></div>
               </form>
               <p className="disclaimer">AI answers can be inaccurate. Open a citation to check the original page.</p>
@@ -335,6 +413,8 @@ function Workspace() {
         )}
       </main>
 
+      {createNotebookOpen && <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !creatingNotebook) setCreateNotebookOpen(false); }}><section className="app-dialog" role="dialog" aria-modal="true" aria-labelledby="create-notebook-title" aria-describedby="create-notebook-description"><button className="modal-close" type="button" onClick={() => setCreateNotebookOpen(false)} disabled={creatingNotebook} aria-label="Close">×</button><p className="eyebrow">NEW NOTEBOOK</p><h2 id="create-notebook-title">Name your notebook</h2><p className="muted dialog-description" id="create-notebook-description">Give this workspace a name that helps you find it later.</p><form className="dialog-form" onSubmit={(event) => void submitCreateNotebook(event)}><label htmlFor="notebook-name">Notebook name</label><input id="notebook-name" autoFocus value={notebookName} onChange={(event) => setNotebookName(event.target.value)} placeholder="For example, Research notes" maxLength={100} required />{createNotebookError && <p className="form-error" role="alert">{createNotebookError}</p>}<div className="dialog-actions"><button className="button button-soft" type="button" onClick={() => setCreateNotebookOpen(false)} disabled={creatingNotebook}>Cancel</button><button className="button button-primary" type="submit" disabled={creatingNotebook || !notebookName.trim()}>{creatingNotebook ? "Creating…" : "Create notebook"}</button></div></form></section></div>}
+      {documentToDelete && <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !deletingDocument) setDocumentToDelete(null); }}><section className="app-dialog" role="alertdialog" aria-modal="true" aria-labelledby="delete-document-title" aria-describedby="delete-document-description"><button className="modal-close" type="button" onClick={() => setDocumentToDelete(null)} disabled={deletingDocument} aria-label="Close">×</button><p className="eyebrow">DELETE DOCUMENT</p><h2 id="delete-document-title">Delete this PDF?</h2><p className="muted dialog-description" id="delete-document-description"><strong>{documentToDelete.filename}</strong> and its conversations, citations, and indexed content will be permanently removed.</p>{deleteDocumentError && <p className="form-error" role="alert">{deleteDocumentError}</p>}<div className="dialog-actions"><button className="button button-soft" type="button" onClick={() => setDocumentToDelete(null)} disabled={deletingDocument}>Cancel</button><button className="button button-danger" type="button" onClick={() => void confirmDeleteDocument()} disabled={deletingDocument}>{deletingDocument ? "Deleting…" : "Delete PDF"}</button></div></section></div>}
       {settingsOpen && <SettingsModal close={() => setSettingsOpen(false)} />}
       {sourceToOpen && <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSourceToOpen(null); }}><section className="source-modal" role="dialog" aria-modal="true" aria-labelledby="source-modal-title"><button className="modal-close" onClick={() => setSourceToOpen(null)} aria-label="Close">×</button><p className="eyebrow">SOURCE PASSAGE</p><h2 id="source-modal-title">{activeDocument?.filename} · page {sourceToOpen.pageNumber}</h2><blockquote>{sourceToOpen.excerpt}</blockquote><hr /><h3>Page text</h3><div className="page-text">{page?.text || "Loading page text…"}</div><button className="button button-soft" onClick={() => { track("citation_opened", { page_number: sourceToOpen.pageNumber }); setSourceToOpen(null); }}>Done</button></section></div>}
     </div>
@@ -343,13 +423,94 @@ function Workspace() {
 
 function renderAnswer(content: string, sources: Source[], open: (source: Source) => void) {
   const byMarker = new Map(sources.map((source) => [source.marker, source]));
-  const parts = content.split(/(\[\d+\])/g);
-  return parts.map((part, index) => {
-    const match = /^\[(\d+)\]$/.exec(part);
-    if (!match) return <span key={index}>{part}</span>;
-    const source = byMarker.get(Number(match[1]));
-    return source ? <button key={index} className="inline-citation" onClick={() => open(source)}>{part}</button> : <span key={index}>{part}</span>;
+  let inlineKey = 0;
+  const renderInline = (text: string): ReactNode[] => text.split(/(\[\d+\]|\*\*[^*]+\*\*|__[^_]+__|`[^`]+`|\*(?!\s)[^*\n]+?\*|_(?!\s)[^_\n]+?_)/g).flatMap((part) => {
+    const key = inlineKey++;
+    const citation = /^\[(\d+)\]$/.exec(part);
+    if (citation) {
+      const source = byMarker.get(Number(citation[1]));
+      return [source ? <button key={key} className="inline-citation" onClick={() => open(source)}>{part}</button> : <span key={key}>{part}</span>];
+    }
+    if ((part.startsWith("**") && part.endsWith("**")) || (part.startsWith("__") && part.endsWith("__"))) {
+      return [<strong key={key}>{renderInline(part.slice(2, -2))}</strong>];
+    }
+    if (part.startsWith("`") && part.endsWith("`")) return [<code className="answer-inline-code" key={key}>{part.slice(1, -1)}</code>];
+    if ((part.startsWith("*") && part.endsWith("*")) || (part.startsWith("_") && part.endsWith("_"))) {
+      return [<em key={key}>{renderInline(part.slice(1, -1))}</em>];
+    }
+    return part.split("\n").flatMap((line, lineIndex) => lineIndex === 0
+      ? [<span key={`${key}-${lineIndex}`}>{line}</span>]
+      : [<br key={`${key}-break-${lineIndex}`} />, <span key={`${key}-${lineIndex}`}>{line}</span>]);
   });
+
+  const lines = content.replace(/\r\n?/g, "\n").split("\n");
+  const blocks: ReactNode[] = [];
+  let index = 0;
+  const bulletPattern = /^\s*[-*+]\s+(.*)$/;
+  const orderedPattern = /^\s*\d+[.)]\s+(.*)$/;
+  const headingPattern = /^(#{1,6})\s+(.*)$/;
+  const isBlockStart = (line: string) => headingPattern.test(line.trim()) || bulletPattern.test(line) || orderedPattern.test(line) || /^\s*```/.test(line) || /^\s*>\s?/.test(line) || /^\s*(---|\*\*\*|___)\s*$/.test(line);
+
+  while (index < lines.length) {
+    const line = lines[index];
+    if (!line.trim()) { index += 1; continue; }
+
+    const heading = headingPattern.exec(line.trim());
+    if (heading) {
+      const level = Math.min(Number(heading[1].length) + 1, 6);
+      const Heading = `h${level}` as "h2" | "h3" | "h4" | "h5" | "h6";
+      blocks.push(<Heading className="answer-heading" key={`heading-${index}`}>{renderInline(heading[2])}</Heading>);
+      index += 1;
+      continue;
+    }
+
+    if (/^\s*(---|\*\*\*|___)\s*$/.test(line)) {
+      blocks.push(<hr className="answer-divider" key={`divider-${index}`} />);
+      index += 1;
+      continue;
+    }
+
+    if (/^\s*```/.test(line)) {
+      index += 1;
+      const codeLines: string[] = [];
+      while (index < lines.length && !/^\s*```/.test(lines[index])) codeLines.push(lines[index++]);
+      if (index < lines.length) index += 1;
+      blocks.push(<pre className="answer-code" key={`code-${index}`}><code>{codeLines.join("\n")}</code></pre>);
+      continue;
+    }
+
+    const bullet = bulletPattern.exec(line);
+    const ordered = orderedPattern.exec(line);
+    if (bullet || ordered) {
+      const isOrdered = Boolean(ordered);
+      const items: ReactNode[] = [];
+      while (index < lines.length) {
+        const match = (isOrdered ? orderedPattern : bulletPattern).exec(lines[index]);
+        if (!match) break;
+        items.push(<li key={`item-${index}`}>{renderInline(match[1])}</li>);
+        index += 1;
+      }
+      blocks.push(isOrdered ? <ol className="answer-list" key={`list-${index}`}>{items}</ol> : <ul className="answer-list" key={`list-${index}`}>{items}</ul>);
+      continue;
+    }
+
+    if (/^\s*>\s?/.test(line)) {
+      const quoteLines: string[] = [];
+      while (index < lines.length && /^\s*>\s?/.test(lines[index])) quoteLines.push(lines[index++].replace(/^\s*>\s?/, ""));
+      blocks.push(<blockquote className="answer-quote" key={`quote-${index}`}>{renderInline(quoteLines.join("\n"))}</blockquote>);
+      continue;
+    }
+
+    const paragraph: string[] = [];
+    while (index < lines.length && lines[index].trim() && !(paragraph.length && isBlockStart(lines[index].trim()))) {
+      if (!paragraph.length && isBlockStart(lines[index].trim())) break;
+      paragraph.push(lines[index++]);
+    }
+    if (paragraph.length) blocks.push(<p className="answer-paragraph" key={`paragraph-${index}`}>{renderInline(paragraph.join("\n"))}</p>);
+    else index += 1;
+  }
+
+  return blocks;
 }
 
 function SettingsModal({ close }: { close: () => void }) {

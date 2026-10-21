@@ -7,6 +7,8 @@ import { components } from "./_generated/api";
 import authConfig from "./auth.config";
 
 const siteUrl = process.env.SITE_URL!;
+const googleClientId = process.env.GOOGLE_CLIENT_ID;
+const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
 export const authComponent = createClient<DataModel>(components.betterAuth);
 
 export const createAuth = (ctx: GenericCtx<DataModel>) =>
@@ -18,6 +20,16 @@ export const createAuth = (ctx: GenericCtx<DataModel>) =>
       enabled: true,
       requireEmailVerification: false,
     },
+    ...(googleClientId && googleClientSecret
+      ? {
+          socialProviders: {
+            google: {
+              clientId: googleClientId,
+              clientSecret: googleClientSecret,
+            },
+          },
+        }
+      : {}),
     plugins: [crossDomain({ siteUrl }), convex({ authConfig })],
   });
 

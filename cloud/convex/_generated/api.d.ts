@@ -18,7 +18,7 @@ import type * as ingestion from "../ingestion.js";
 import type * as lib_chunker from "../lib/chunker.js";
 import type * as lib_gemini from "../lib/gemini.js";
 import type * as lib_identity from "../lib/identity.js";
-import type * as lib_r2 from "../lib/r2.js";
+import type * as lib_supabaseStorage from "../lib/supabaseStorage.js";
 import type * as notebooks from "../notebooks.js";
 import type * as settings from "../settings.js";
 import type * as storage from "../storage.js";
@@ -40,7 +40,7 @@ declare const fullApi: ApiFromModules<{
   "lib/chunker": typeof lib_chunker;
   "lib/gemini": typeof lib_gemini;
   "lib/identity": typeof lib_identity;
-  "lib/r2": typeof lib_r2;
+  "lib/supabaseStorage": typeof lib_supabaseStorage;
   notebooks: typeof notebooks;
   settings: typeof settings;
   storage: typeof storage;

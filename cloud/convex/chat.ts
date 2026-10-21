@@ -31,12 +31,18 @@ function isRefusal(answer: string): boolean {
   return /could not find|couldn't find|not in the document|does not contain|isn't provided|not provided/i.test(answer);
 }
 
-function userError(error: unknown): string {
+function userError(error: unknown, apiKey: string): string {
   if (error instanceof Error && error.message.includes("Gemini API key")) {
     return "Add your Gemini API key in Settings, then try again.";
   }
   if (error instanceof Error && error.message.includes("still being indexed")) return error.message;
-  return "I couldn't finish this answer. Check your Gemini key and connection, then try again.";
+  const detail = error instanceof Error
+    ? error.message
+        .replaceAll(apiKey, "[hidden]")
+        .replace(/AIza[\w-]{20,}/g, "[hidden]")
+        .slice(0, 220)
+    : "Unknown error.";
+  return `Answer failed: ${detail}`;
 }
 
 export const ask = action({
@@ -123,7 +129,7 @@ export const ask = action({
       });
       return { answer, sources, failed: false };
     } catch (error) {
-      const message = userError(error);
+      const message = userError(error, apiKey);
       await ctx.runMutation(internal.conversations.addAssistantMessage, {
         conversationId: args.conversationId,
         ownerId,
